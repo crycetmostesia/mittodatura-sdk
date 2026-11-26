@@ -43,7 +43,7 @@ import asyncio
 from mittodatura import MittodaturaClient
 
 async def main():
-    async with MittodaturaClient("[https://panel.mittodatura.online](https://panel.mittodatura.online)", "mittodatura_live_your_key") as client:
+    async with MittodaturaClient("https://panel.mittodatura.online", "mittodatura_live_your_key") as client:
         catalog = await client.get_catalog()
         order = await client.fulfill_and_wait(
             external_order_id="shop_order_10492",
@@ -62,7 +62,7 @@ asyncio.run(main())
 ```javascript
 import { MittodaturaClient } from "./node/mittodatura.mjs";
 
-const client = new MittodaturaClient("[https://panel.mittodatura.online](https://panel.mittodatura.online)", "mittodatura_live_your_key");
+const client = new MittodaturaClient("https://panel.mittodatura.online", "mittodatura_live_your_key");
 
 const order = await client.fulfillAndWait({
   externalOrderId: "shop_order_10492",
