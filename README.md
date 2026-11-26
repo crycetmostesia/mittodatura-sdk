@@ -8,7 +8,7 @@
 
 ## возможности
 
-- получение актуального каталога и схем payload
+- получение актуального каталога (`tree` и `items`) со схемами `payloadExample`
 - создание идемпотентных заказов через заголовок `Idempotency-Key`
 - опрос статуса заказа до финального состояния (`COMPLETED`, `FAILED`, `REFUNDED`)
 - проверка подписи входящих вебхуков (`HMAC-SHA256`)
@@ -24,9 +24,9 @@
 
 все запросы к `/api/v1/*` требуют заголовок:
 
-`X-Api-Key: b2b_live_...`
+`X-Api-Key: mittodatura_live_...`
 
-выпустить ключ и пополнить баланс можно в личном кабинете на `panel.mittodatura.online`. для тестирования без списания реальных средств используйте ключ окружения sandbox (`b2b_test_...`).
+выпустить ключ и пополнить баланс можно в кабинете на `panel.mittodatura.online`. для тестов без списания средств используется ключ окружения sandbox (`mittodatura_test_...`).
 
 ## быстрый старт (python)
 
@@ -34,3 +34,69 @@
 
 ```bash
 pip install httpx
+```
+
+пример использования в коде магазина:
+
+```python
+import asyncio
+from mittodatura import MittodaturaClient
+
+async def main():
+    async with MittodaturaClient("[https://panel.mittodatura.online](https://panel.mittodatura.online)", "mittodatura_live_your_key") as client:
+        catalog = await client.get_catalog()
+        order = await client.fulfill_and_wait(
+            external_order_id="shop_order_10492",
+            product_sku="STEAM_TOPUP_1USD",
+            customer_payload={"login": "steam_user_login"},
+        )
+        print(order)
+
+asyncio.run(main())
+```
+
+## быстрый старт (node.js)
+
+внешние пакеты не требуются:
+
+```javascript
+import { MittodaturaClient } from "./node/mittodatura.mjs";
+
+const client = new MittodaturaClient("[https://panel.mittodatura.online](https://panel.mittodatura.online)", "mittodatura_live_your_key");
+
+const order = await client.fulfillAndWait({
+  externalOrderId: "shop_order_10492",
+  productSku: "STEAM_TOPUP_1USD",
+  customerPayload: { login: "steam_user_login" },
+});
+
+console.log(order);
+```
+
+## эндпоинты
+
+- `GET /api/v1/catalog` — возвращает `updatedAtUtc`, сгруппированное дерево `tree` и плоский список `items` с полями `payloadExample` и `requiredPayloadFields`
+- `POST /api/v1/orders` — создание заказа; обязателен заголовок `Idempotency-Key` (уникальный id заказа в вашей системе)
+- `GET /api/v1/orders/{orderId}` — получение статуса заказа и данных выдачи
+
+## проверка вебхуков
+
+при указании webhook url в кабинете шлюз отправляет post-запросы с заголовками:
+
+- `X-Timestamp` — unix-время отправки в секундах
+- `X-Signature` — строка вида `sha256=<hex>`
+
+подпись вычисляется как `hmac_sha256(secret, "{timestamp}.{raw_body}")`. метод `verify_webhook` (и его аналоги в других языках) проверяет подпись и отклоняет запросы старше 300 секунд.
+
+## обработка ошибок
+
+при статусе ответа `>= 400` api возвращает json:
+
+```json
+{
+  "error": {
+    "code": "INSUFFICIENT_FUNDS",
+    "message": "not enough balance"
+  }
+}
+```
