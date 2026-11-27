@@ -5,6 +5,8 @@
 - панель управления: https://panel.mittodatura.online
 - документация openapi: https://panel.mittodatura.online/docs
 - базовый url api: https://panel.mittodatura.online
+- сайт и условия: https://mittodatura.online
+- API пополнения Steam: https://mittodatura.online/steam-topup-api
 
 ## возможности
 
